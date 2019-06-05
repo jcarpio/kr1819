@@ -56,7 +56,7 @@ path(Ini, Fin, Visited, [move(M,C,Side)|Path]):-
   path(Temp, Fin, [Temp|Visited], Path).
   
   
-draw_square :-
+draw_square(Window) :-
   new(Window, picture('Missionaires and Cannibals')),
   send(Window, size, size(400,400)),
   send(Window, open).
@@ -66,7 +66,7 @@ draw_square :-
 % P = [move(0,1,left),move(0,1,right),move(1,1,left),move(1,0,right),move(0,2,left),move(0,1,right),move(2,0,left),move(1,1,right),move(2,0,left),move(0,1,right),move(0,2,left),move(0,1,right),move(0,2,left)]
 
 misPos([point(9,180), point(59, 180), point(109, 180), point(259,180), point(309,180), point(359, 180)]).
-canPos([point(9,220), point(59, 220), point(109, 220), point(259,220), point(309, 200), point(359, 220)]).
+canPos([point(9,220), point(59, 220), point(109, 220), point(259,220), point(309, 220), point(359, 220)]).
   
 rotateLeft(List, 0, List).  
 rotateLeft([Head|Tail], N, R):- N > 0, N2 is N-1,
@@ -80,29 +80,56 @@ rotateRight(List, N, R):- N > 0, N2 is N-1,
   
 moveGraphic(_, []).
   
-moveGraphic(state(MisGraphState, CanGraphState), [move(Mis, Can, left)| Tail]):-
+moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, left)| Tail]):-
   rotateLeft(MisGraphState, Mis, NewMisGraphState),
   rotateLeft(CanGraphState, Can, NewCanGraphState),
   % Delete elements
   % Paint new State
+  misPos(MisPos), canPos(CanPos),
+  paintState(state(NewMisGraphState, NewCanGraphState), MisPos, CanPos, Window, _),  
   % Delay time
-  write(state(NewMisGraphState, NewCanGraphState)),
-  write(nl),
-  moveGraphic(state(NewMisGraphState, NewCanGraphState), Tail).
+  sleep(1),
+  % write(state(NewMisGraphState, NewCanGraphState)),
+  % write(nl),
+  moveGraphic(Window, state(NewMisGraphState, NewCanGraphState), Tail).
   
-moveGraphic(state(MisGraphState, CanGraphState), [move(Mis, Can, right)| Tail]):-
+moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, right)| Tail]):-
   rotateRight(MisGraphState, Mis, NewMisGraphState),
   rotateRight(CanGraphState, Can, NewCanGraphState),
   % Delete elements
   % Paint new State
+  misPos(MisPos), canPos(CanPos),
+  paintState(state(NewMisGraphState, NewCanGraphState), MisPos, CanPos, Window, _),
   % Delay time
-  write(state(NewMisGraphState, NewCanGraphState)),
-  write(nl),
-  moveGraphic(state(NewMisGraphState, NewCanGraphState), Tail).   
+  sleep(1),
+  % write(state(NewMisGraphState, NewCanGraphState)),
+  % write(nl),
+  moveGraphic(Window, state(NewMisGraphState, NewCanGraphState), Tail).   
 
-solution :-  path(state(3,3,right), state(0,0,_), [], P), moveGraphic(state([0,0,0,1,1,1], [0,0,0,1,1,1]), P). 
+solution :-  path(state(3,3,right), state(0,0,_), [], P), draw_square(Window), moveGraphic(Window, state([0,0,0,1,1,1], [0,0,0,1,1,1]), P). 
 
-paintState(state(Mis, Can), Window):-
+paintState(state([], []), _, _, _, []).
+paintState(state([HeadMis|TailMis], [HeadCan|TailCan]), 
+  [HeadPosMis|TailPosMis], [HeadPosCan|TailPosCan], Window, 
+  [BitmapMis, BitmapCan|BitmapList]):-  
+  drawMis(Window, HeadMis, HeadPosMis, BitmapMis),
+  drawCan(Window, HeadCan, HeadPosCan, BitmapCan),
+  paintState(state(TailMis, TailCan), TailPosMis, TailPosCan, Window, BitmapList).
+  
+  
+paintOneState :- draw_square(Window), 
+  misPos(MisPos), canPos(CanPos),
+  paintState(state([0,0,0,1,1,1], [0,0,0,1,1,1]), MisPos, CanPos, Window, _).  
+
+drawCan(_, 0, _, _).
+drawCan(Window, 1, point(X, Y), Bitmap1):- 
+        send(Window, display,
+          new(Bitmap1, bitmap('32x32/cannibal.xpm')), point(X,Y)).
+		  
+drawMis(_, 0, _, _).		  
+drawMis(Window, 1, point(X, Y), Bitmap1):- 
+        send(Window, display,
+          new(Bitmap1, bitmap('32x32/angel.xpm')), point(X,Y)).
    
   
   
