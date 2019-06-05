@@ -65,10 +65,51 @@ draw_square :-
 % path(state(3,3,right), state(0,0,_), [], P), write(P).
 % P = [move(0,1,left),move(0,1,right),move(1,1,left),move(1,0,right),move(0,2,left),move(0,1,right),move(2,0,left),move(1,1,right),move(2,0,left),move(0,1,right),move(0,2,left),move(0,1,right),move(0,2,left)]
 
-MisPos([point(9,180), point(59, 180), point(109, 180), point(259,180), point(309,180), point(359, 180)]
+misPos([point(9,180), point(59, 180), point(109, 180), point(259,180), point(309,180), point(359, 180)]).
+canPos([point(9,220), point(59, 220), point(109, 220), point(259,220), point(309, 200), point(359, 220)]).
+  
+rotateLeft(List, 0, List).  
+rotateLeft([Head|Tail], N, R):- N > 0, N2 is N-1,
+  append(Tail, [Head], L2),
+  rotateLeft(L2, N2, R).
 
+rotateRight(List, 0, List).    
+rotateRight(List, N, R):- N > 0, N2 is N-1,
+  append(L1, [Last], List),
+  rotateRight([Last|L1], N2, R).
+  
+moveGraphic(_, []).
+  
+moveGraphic(state(MisGraphState, CanGraphState), [move(Mis, Can, left)| Tail]):-
+  rotateLeft(MisGraphState, Mis, NewMisGraphState),
+  rotateLeft(CanGraphState, Can, NewCanGraphState),
+  % Delete elements
+  % Paint new State
+  % Delay time
+  write(state(NewMisGraphState, NewCanGraphState)),
+  write(nl),
+  moveGraphic(state(NewMisGraphState, NewCanGraphState), Tail).
+  
+moveGraphic(state(MisGraphState, CanGraphState), [move(Mis, Can, right)| Tail]):-
+  rotateRight(MisGraphState, Mis, NewMisGraphState),
+  rotateRight(CanGraphState, Can, NewCanGraphState),
+  % Delete elements
+  % Paint new State
+  % Delay time
+  write(state(NewMisGraphState, NewCanGraphState)),
+  write(nl),
+  moveGraphic(state(NewMisGraphState, NewCanGraphState), Tail).   
+
+solution :-  path(state(3,3,right), state(0,0,_), [], P), moveGraphic(state([0,0,0,1,1,1], [0,0,0,1,1,1]), P). 
+
+paintState(state(Mis, Can), Window):-
+   
   
   
+
+
+
+
 
 
 
