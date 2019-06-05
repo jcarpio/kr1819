@@ -1,5 +1,7 @@
 :- use_module(library(pce)).
 
+window_size(400, 400).
+
 % Cannibals and Missionaires Game
 
 % 1. State Representation
@@ -59,7 +61,26 @@ path(Ini, Fin, Visited, [move(M,C,Side)|Path]):-
 draw_square(Window) :-
   new(Window, picture('Missionaires and Cannibals')),
   send(Window, size, size(400,400)),
-  send(Window, open).
+  send(Window, open),
+  draw_lines(Window).
+  
+draw_lines(Window):- 
+  window_size(MaxX, MaxY),
+  X11 is (MaxX div 2 + 50),
+  Y11 is MaxY,
+  X12 is X11, Y12 is 0,
+  send(Window, display, new(Pa, path)),
+        (
+	      send(Pa, append, point(X11, Y11)),
+          send(Pa, append, point(X12, Y12))
+		),
+  X21 is (MaxX div 2 - 50), Y21 is MaxY,
+  X22 is X21, Y22 is 0,  
+  send(Window, display, new(Pa2, path)),
+        (
+	      send(Pa2, append, point(X21, Y21)),
+          send(Pa2, append, point(X22, Y22))
+		).  
  
 % 
 % path(state(3,3,right), state(0,0,_), [], P), write(P).
@@ -78,12 +99,13 @@ rotateRight(List, N, R):- N > 0, N2 is N-1,
   append(L1, [Last], List),
   rotateRight([Last|L1], N2, R).
   
-moveGraphic(_, []).
+moveGraphic(_, [], _).
   
-moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, left)| Tail]):-
+moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, left)| Tail], ElementsList):-
   rotateLeft(MisGraphState, Mis, NewMisGraphState),
   rotateLeft(CanGraphState, Can, NewCanGraphState),
   % Delete elements
+  deleteElements(ElementsList),
   % Paint new State
   misPos(MisPos), canPos(CanPos),
   paintState(state(NewMisGraphState, NewCanGraphState), MisPos, CanPos, Window, _),  
@@ -93,20 +115,26 @@ moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, left)| 
   % write(nl),
   moveGraphic(Window, state(NewMisGraphState, NewCanGraphState), Tail).
   
-moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, right)| Tail]):-
+moveGraphic(Window, state(MisGraphState, CanGraphState), [move(Mis, Can, right)| Tail], ElementsList):-
   rotateRight(MisGraphState, Mis, NewMisGraphState),
   rotateRight(CanGraphState, Can, NewCanGraphState),
   % Delete elements
+  deleteElements(ElementsList),
   % Paint new State
   misPos(MisPos), canPos(CanPos),
-  paintState(state(NewMisGraphState, NewCanGraphState), MisPos, CanPos, Window, _),
+  paintState(state(NewMisGraphState, NewCanGraphState), MisPos, CanPos, Window, NewElements),
   % Delay time
   sleep(1),
   % write(state(NewMisGraphState, NewCanGraphState)),
   % write(nl),
-  moveGraphic(Window, state(NewMisGraphState, NewCanGraphState), Tail).   
+  moveGraphic(Window, state(NewMisGraphState, NewCanGraphState), Tail, NewElements).   
 
-solution :-  path(state(3,3,right), state(0,0,_), [], P), draw_square(Window), moveGraphic(Window, state([0,0,0,1,1,1], [0,0,0,1,1,1]), P). 
+solution :-  path(state(3,3,right), state(0,0,_), [], P), draw_square(Window), moveGraphic(Window, state([0,0,0,1,1,1], [0,0,0,1,1,1]), P, []). 
+
+deleteElements([]).
+deleteElements([Head|Tail]):-
+  free(Head),
+  deleteElements(Tail).
 
 paintState(state([], []), _, _, _, []).
 paintState(state([HeadMis|TailMis], [HeadCan|TailCan]), 
